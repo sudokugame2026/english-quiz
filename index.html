@@ -329,6 +329,61 @@
             color: #28a745;
         }
 
+        /* 右侧进度侧边栏 */
+        .sidebar {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 200px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px;
+            font-size: 13px;
+            z-index: 100;
+        }
+
+        .sidebar h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #333;
+            text-align: center;
+        }
+
+        .sidebar-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .sidebar-item:last-child {
+            border-bottom: none;
+        }
+
+        .sidebar-label {
+            color: #666;
+        }
+
+        .sidebar-value {
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        .sidebar-correct {
+            color: #28a745;
+        }
+
+        .sidebar-wrong {
+            color: #dc3545;
+        }
+
+        /* 已答标记 */
+        .answered-mark {
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -462,6 +517,41 @@
             <div class="btn-group" style="margin-top: 20px;">
                 <button class="btn btn-secondary" id="clear-error-btn">清空错题本</button>
                 <button class="btn btn-primary" id="practice-error-btn">练习错题</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧答题进度侧边栏 -->
+    <div class="sidebar" id="sidebar">
+        <h3>📊 答题进度</h3>
+        <div class="sidebar-item">
+            <span class="sidebar-label">选词填空</span>
+            <span class="sidebar-value" id="sidebar-choice">0/200</span>
+        </div>
+        <div class="sidebar-item">
+            <span class="sidebar-label">单词拼写</span>
+            <span class="sidebar-value" id="sidebar-word">0/120</span>
+        </div>
+        <div class="sidebar-item">
+            <span class="sidebar-label">短语翻译</span>
+            <span class="sidebar-value" id="sidebar-phrase">0/60</span>
+        </div>
+        <div class="sidebar-item">
+            <span class="sidebar-label">句子翻译</span>
+            <span class="sidebar-value" id="sidebar-sentence">0/40</span>
+        </div>
+        <div class="sidebar-item">
+            <span class="sidebar-label">段落翻译</span>
+            <span class="sidebar-value" id="sidebar-paragraph">0/8</span>
+        </div>
+        <div style="border-top: 2px solid #eee; margin-top: 10px; padding-top: 10px;">
+            <div class="sidebar-item">
+                <span class="sidebar-label">正确率</span>
+                <span class="sidebar-correct" id="sidebar-accuracy">0%</span>
+            </div>
+            <div class="sidebar-item">
+                <span class="sidebar-label">错题数</span>
+                <span class="sidebar-wrong" id="sidebar-errors">0</span>
             </div>
         </div>
     </div>
@@ -1001,7 +1091,10 @@
             timerSeconds: 0,
             errorBook: JSON.parse(localStorage.getItem("fdEnglish3ErrorBook")) || [],
             isErrorPracticeMode: false,
-            currentErrorIndex: 0
+            currentErrorIndex: 0,
+            // 答题进度追踪
+            answeredQuestions: {}, // {type: {index: {answered: bool, correct: bool}}}
+            progress: {} // {type: currentIndex}
         };
 
         // ========== DOM 元素获取 ==========
@@ -1059,6 +1152,9 @@
 
         // ========== 初始化函数 ==========
         function init() {
+            // 加载保存的进度
+            loadSavedState();
+
             // 初始化标签切换事件
             elements.tabBtns.forEach(btn => {
                 btn.addEventListener("click", switchTab);
@@ -1078,6 +1174,9 @@
 
             // 初始化错题数显示
             updateErrorCount();
+            
+            // 更新右侧进度栏
+            updateSidebar();
 
             // 初始化默认题型（选词填空）
             switchTab({ target: { dataset: { tab: "choice" } } });
@@ -1088,9 +1187,15 @@
             // 更新选中标签
             const tab = e.target.dataset.tab;
             state.currentTab = tab;
-            state.currentIndex = 0;
             state.selectedOption = "";
             state.isErrorPracticeMode = false;
+
+            // 恢复上次做到的位置（仅在非错题练习模式下）
+            if (!state.isErrorPracticeMode && state.progress[tab] !== undefined) {
+                state.currentIndex = state.progress[tab];
+            } else {
+                state.currentIndex = 0;
+            }
 
             // 切换标签样式
             elements.tabBtns.forEach(btn => {
@@ -1111,6 +1216,7 @@
             // 更新总数显示
             updateTotalCount();
             updateScoreDisplay();
+            updateSidebar();
         }
 
         // ========== 加载当前题目 ==========
@@ -1118,6 +1224,10 @@
             const tab = state.currentTab;
             const index = state.currentIndex;
             const questions = getCurrentQuestions();
+            const q = questions[index];
+            
+            // 检查是否已答过
+            const answered = state.answeredQuestions[tab] && state.answeredQuestions[tab][index];
 
             // 更新当前题目数
             elements.currentQuestion.textContent = index + 1;
@@ -1125,19 +1235,19 @@
 
             switch (tab) {
                 case "choice":
-                    loadChoiceQuestion(questions[index]);
+                    loadChoiceQuestion(questions[index], answered);
                     break;
                 case "word":
-                    loadWordQuestion(questions[index]);
+                    loadWordQuestion(questions[index], answered);
                     break;
                 case "phrase":
-                    loadPhraseQuestion(questions[index]);
+                    loadPhraseQuestion(questions[index], answered);
                     break;
                 case "sentence":
-                    loadSentenceQuestion(questions[index]);
+                    loadSentenceQuestion(questions[index], answered);
                     break;
                 case "paragraph":
-                    loadParagraphQuestion(questions[index]);
+                    loadParagraphQuestion(questions[index], answered);
                     break;
             }
         }
@@ -1170,7 +1280,7 @@
         }
 
         // 加载选词填空题目
-        function loadChoiceQuestion(q) {
+        function loadChoiceQuestion(q, answered) {
             elements.choiceQuestion.textContent = q.question;
             
             // 清空选项
@@ -1183,43 +1293,67 @@
                 option.dataset.key = key;
                 option.textContent = `${key}: ${value}`;
                 
-                // 选项点击事件
-                option.addEventListener("click", () => {
-                    // 取消其他选项选中状态
-                    document.querySelectorAll(".option-item").forEach(item => {
-                        item.classList.remove("selected");
+                // 如果已答过，显示对错标记
+                if (answered) {
+                    if (key === q.answer) {
+                        option.classList.add("correct");
+                        option.innerHTML += ' <span class="answered-mark">✅</span>';
+                    } else {
+                        option.classList.add("wrong");
+                        option.innerHTML += ' <span class="answered-mark">❌</span>';
+                    }
+                    option.style.pointerEvents = "none";
+                } else {
+                    // 选项点击事件
+                    option.addEventListener("click", () => {
+                        // 取消其他选项选中状态
+                        document.querySelectorAll(".option-item").forEach(item => {
+                            item.classList.remove("selected");
+                        });
+                        // 选中当前选项
+                        option.classList.add("selected");
+                        state.selectedOption = key;
                     });
-                    // 选中当前选项
-                    option.classList.add("selected");
-                    state.selectedOption = key;
-                });
+                }
                 
                 elements.choiceOptions.appendChild(option);
             }
         }
 
         // 加载单词拼写题目
-        function loadWordQuestion(q) {
+        function loadWordQuestion(q, answered) {
             elements.wordQuestion.textContent = q.question;
             elements.wordInput.value = "";
+            if (answered) {
+                elements.wordQuestion.innerHTML += ' <span class="answered-mark">' + (answered.correct ? '✅' : '❌') + '</span>';
+            }
         }
 
         // 加载短语翻译题目
-        function loadPhraseQuestion(q) {
+        function loadPhraseQuestion(q, answered) {
             elements.phraseQuestion.textContent = q.question;
             elements.phraseInput.value = "";
+            if (answered) {
+                elements.phraseQuestion.innerHTML += ' <span class="answered-mark">' + (answered.correct ? '✅' : '❌') + '</span>';
+            }
         }
 
         // 加载句子翻译题目
-        function loadSentenceQuestion(q) {
+        function loadSentenceQuestion(q, answered) {
             elements.sentenceQuestion.textContent = q.question;
             elements.sentenceInput.value = "";
+            if (answered) {
+                elements.sentenceQuestion.innerHTML += ' <span class="answered-mark">' + (answered.correct ? '✅' : '❌') + '</span>';
+            }
         }
 
         // 加载段落翻译题目
-        function loadParagraphQuestion(q) {
+        function loadParagraphQuestion(q, answered) {
             elements.paragraphQuestion.textContent = q.question;
             elements.paragraphInput.value = "";
+            if (answered) {
+                elements.paragraphQuestion.innerHTML += ' <span class="answered-mark">' + (answered.correct ? '✅' : '❌') + '</span>';
+            }
         }
 
         // ========== 提交答案 ==========
@@ -1260,6 +1394,12 @@
                     break;
             }
 
+            // 记录答题状态
+            if (!state.answeredQuestions[tab]) {
+                state.answeredQuestions[tab] = {};
+            }
+            state.answeredQuestions[tab][index] = { answered: true, correct: isCorrect };
+
             // 更新得分
             if (isCorrect) {
                 state.score++;
@@ -1271,11 +1411,16 @@
             state.answeredCount++;
             state.hasAnswered = true;
 
+            // 保存当前位置
+            state.progress[tab] = index;
+
             // 显示答案提示
             showAnswerHint(isCorrect, correctAnswer);
 
             // 更新得分显示
             updateScoreDisplay();
+            updateSidebar();
+            saveState();
         }
 
         // 标记选词填空选项对错
@@ -1347,6 +1492,10 @@
             // 切换到下一题（循环）
             state.currentIndex = (state.currentIndex + 1) % total;
             
+            // 保存当前位置
+            state.progress[tab] = state.currentIndex;
+            saveState();
+            
             // 加载新题目
             loadCurrentQuestion();
         }
@@ -1363,6 +1512,7 @@
             // 重新加载题目
             loadCurrentQuestion();
             updateTotalCount();
+            saveState();
         }
 
         // ========== 计时功能 ==========
@@ -1388,6 +1538,7 @@
             const minutes = Math.floor((state.timerSeconds % 3600) / 60).toString().padStart(2, "0");
             const seconds = (state.timerSeconds % 60).toString().padStart(2, "0");
             elements.timer.textContent = `${hours}:${minutes}:${seconds}`;
+            saveState();
         }
 
         // ========== 错题本功能 ==========
@@ -1517,6 +1668,8 @@
                 state.hasAnswered = false;
                 state.selectedOption = "";
                 state.shuffledQuestions = null;
+                state.answeredQuestions = {};
+                state.progress = {};
                 
                 // 停止计时
                 if (state.isTimerRunning) {
@@ -1532,10 +1685,77 @@
                 loadCurrentQuestion();
                 updateTotalCount();
                 updateScoreDisplay();
+                updateSidebar();
+                saveState();
             }
         }
 
         // ========== 辅助函数 ==========
+        // 保存状态到 localStorage
+        function saveState() {
+            localStorage.setItem("fdEnglish3Progress", JSON.stringify({
+                score: state.score,
+                answeredCount: state.answeredCount,
+                answeredQuestions: state.answeredQuestions,
+                progress: state.progress,
+                errorBook: state.errorBook,
+                timerSeconds: state.timerSeconds
+            }));
+        }
+
+        // 从 localStorage 加载保存的进度
+        function loadSavedState() {
+            const saved = localStorage.getItem("fdEnglish3Progress");
+            if (saved) {
+                const data = JSON.parse(saved);
+                state.score = data.score || 0;
+                state.answeredCount = data.answeredCount || 0;
+                state.answeredQuestions = data.answeredQuestions || {};
+                state.progress = data.progress || {};
+                state.errorBook = data.errorBook || [];
+                state.timerSeconds = data.timerSeconds || 0;
+                // 恢复计时器显示
+                const hours = Math.floor(state.timerSeconds / 3600).toString().padStart(2, "0");
+                const minutes = Math.floor((state.timerSeconds % 3600) / 60).toString().padStart(2, "0");
+                const seconds = (state.timerSeconds % 60).toString().padStart(2, "0");
+                elements.timer.textContent = `${hours}:${minutes}:${seconds}`;
+            }
+        }
+
+        // 更新右侧侧边栏进度
+        function updateSidebar() {
+            const totals = { choice: 200, word: 120, phrase: 60, sentence: 40, paragraph: 8 };
+            const typeNames = { choice: "选词填空", word: "单词拼写", phrase: "短语翻译", sentence: "句子翻译", paragraph: "段落翻译" };
+            
+            let totalAnswered = 0;
+            let totalCorrect = 0;
+            
+            for (const type in totals) {
+                const answered = state.answeredQuestions[type] || {};
+                let answeredCount = 0;
+                let correctCount = 0;
+                
+                for (const idx in answered) {
+                    if (answered[idx].answered) {
+                        answeredCount++;
+                        if (answered[idx].correct) correctCount++;
+                    }
+                }
+                
+                totalAnswered += answeredCount;
+                totalCorrect += correctCount;
+                
+                const el = document.getElementById(`sidebar-${type}`);
+                if (el) {
+                    el.textContent = `${answeredCount}/${totals[type]}`;
+                }
+            }
+            
+            const accuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
+            document.getElementById("sidebar-accuracy").textContent = `${accuracy}%`;
+            document.getElementById("sidebar-errors").textContent = state.errorBook.length;
+        }
+
         // 重置输入框和答案提示
         function resetInputAndHint() {
             // 清空输入框
