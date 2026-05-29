@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>复旦《英语3》互动刷题程序（完整版）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .header-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .timer {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .tab-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 10px 18px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .tab-btn.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .tab-btn:hover {
+            background: #dde1e6;
+        }
+
+        .tab-btn.active:hover {
+            background: #0069d9;
+        }
+
+        .control-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .control-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .control-btn.active {
+            background: #28a745;
+            color: white;
+        }
+
+        .control-btn.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .control-btn.danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .question-area {
+            display: none;
+            margin-bottom: 30px;
+        }
+
+        .question-area.active {
+            display: block;
+        }
+
+        .question-title {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .question-content {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #444;
+            white-space: pre-line;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .option-item {
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .option-item:hover {
+            background: #e9ecef;
+        }
+
+        .option-item.selected {
+            border-color: #007bff;
+            background: #e7f0ff;
+        }
+
+        .option-item.correct {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .option-item.wrong {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .input-answer {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            margin: 10px 0 20px;
+            font-family: inherit;
+        }
+
+        .textarea-answer {
+            min-height: 120px;
+            resize: vertical;
+            line-height: 1.8;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0069d9;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .answer-hint {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+            white-space: pre-line;
+        }
+
+        .answer-correct {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .answer-wrong {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .progress {
+            margin: 20px 0;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #007bff;
+            transition: width 0.3s;
+        }
+
+        /* 错题本样式 */
+        .error-book-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 800px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .close-modal {
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .error-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .error-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+        }
+
+        .error-question {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .error-answer {
+            color: #dc3545;
+            margin-bottom: 5px;
+        }
+
+        .error-correct {
+            color: #28a745;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .header-stats {
+                gap: 15px;
+            }
+
+            .tab-btn {
+                flex: 1 1 30%;
+                text-align: center;
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+
+            .control-bar {
+                justify-content: center;
+            }
+
+            .btn {
+                flex: 1 1 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>复旦《英语3》互动刷题程序（完整版）</h1>
+            <div class="header-stats">
+                <div class="stat-item">
+                    得分: <span id="total-score">0</span> / <span id="total-questions">0</span>
+                </div>
+                <div class="stat-item">
+                    正确率: <span id="accuracy">0%</span>
+                </div>
+                <div class="stat-item timer">
+                    计时: <span id="timer">00:00:00</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- 题型切换标签 -->
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="choice">选词填空（200题）</button>
+            <button class="tab-btn" data-tab="word">单词拼写（120词）</button>
+            <button class="tab-btn" data-tab="phrase">短语翻译（60个）</button>
+            <button class="tab-btn" data-tab="sentence">句子翻译（40句）</button>
+            <button class="tab-btn" data-tab="paragraph">段落翻译（8段）</button>
+        </div>
+
+        <!-- 功能控制栏 -->
+        <div class="control-bar">
+            <button class="control-btn" id="random-btn">随机出题</button>
+            <button class="control-btn" id="timer-btn">开始计时</button>
+            <button class="control-btn warning" id="error-book-btn">错题本 (<span id="error-count">0</span>)</button>
+            <button class="control-btn danger" id="reset-btn">重置进度</button>
+        </div>
+
+        <!-- 进度条 -->
+        <div class="progress">
+            题目: <span id="current-question">1</span> / <span id="total-count">0</span>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- 1. 选词填空区域 -->
+        <div class="question-area active" id="choice-area">
+            <div class="question-title">选词填空</div>
+            <div class="question-content" id="choice-question"></div>
+            <div class="options" id="choice-options"></div>
+            <div class="answer-hint" id="choice-answer"></div>
+        </div>
+
+        <!-- 2. 单词拼写区域 -->
+        <div class="question-area" id="word-area">
+            <div class="question-title">单词拼写（根据中文写英文）</div>
+            <div class="question-content" id="word-question"></div>
+            <input type="text" class="input-answer" id="word-input" placeholder="请输入英文单词（小写）">
+            <div class="answer-hint" id="word-answer"></div>
+        </div>
+
+        <!-- 3. 短语翻译区域 -->
+        <div class="question-area" id="phrase-area">
+            <div class="question-title">短语翻译（根据英文译中文）</div>
+            <div class="question-content" id="phrase-question"></div>
+            <input type="text" class="input-answer" id="phrase-input" placeholder="请输入中文翻译">
+            <div class="answer-hint" id="phrase-answer"></div>
+        </div>
+
+        <!-- 4. 句子翻译区域 -->
+        <div class="question-area" id="sentence-area">
+            <div class="question-title">句子翻译（根据中文译英文）</div>
+            <div class="question-content" id="sentence-question"></div>
+            <textarea class="input-answer textarea-answer" id="sentence-input" placeholder="请输入英文句子"></textarea>
+            <div class="answer-hint" id="sentence-answer"></div>
+        </div>
+
+        <!-- 5. 段落翻译区域 -->
+        <div class="question-area" id="paragraph-area">
+            <div class="question-title">段落翻译（根据英文译中文）</div>
+            <div class="question-content" id="paragraph-question"></div>
+            <textarea class="input-answer textarea-answer" id="paragraph-input" placeholder="请输入中文翻译"></textarea>
+            <div class="answer-hint" id="paragraph-answer"></div>
+        </div>
+
+        <!-- 功能按钮 -->
+        <div class="btn-group">
+            <button class="btn btn-primary" id="submit-btn">提交答案</button>
+            <button class="btn btn-secondary" id="next-btn">下一题</button>
+            <button class="btn btn-secondary" id="show-answer-btn">显示答案</button>
+        </div>
+    </div>
+
+    <!-- 错题本模态框 -->
+    <div class="error-book-modal" id="error-book-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>错题本</h2>
+                <span class="close-modal" id="close-modal">&times;</span>
+            </div>
+            <div class="error-list" id="error-list">
+                <p>暂无错题记录</p>
+            </div>
+            <div class="btn-group" style="margin-top: 20px;">
+                <button class="btn btn-secondary" id="clear-error-btn">清空错题本</button>
+                <button class="btn btn-primary" id="practice-error-btn">练习错题</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== 完整题库数据 ==========
+        // 1. 选词填空题目数据（完整200题，原文档全部题目）
+        const choiceQuestions = [
+            // 第一组（30题）
+            { question: "It pays to _____ as much as you can from reading and listening.", options: {A: "absorb", B: "arrange", C: "assign", D: "accomplish"}, answer: "A" },
+            { question: "Frankly speaking, he and I are not real friends, only nodding _____ .", options: {A: "findings", B: "means", C: "acquaintances", D: "observations"}, answer: "C" },
+            { question: "It is said that the female reporter was _____ to cover the war in Iraq.", options: {A: "complained", B: "applied", C: "handled", D: "assigned"}, answer: "D" },
+            { question: "The naughty boy has no _____ over himself.", options: {A: "opportunity", B: "process", C: "command", D: "strategy"}, answer: "C" },
+            { question: "Can you _____ to memory all the main points of the lecture?", options: {A: "concentrate", B: "commit", C: "communicate", D: "compose"}, answer: "B" },
+            { question: "The two friends haven't _____ with each other for years.", options: {A: "operated", B: "graduated", C: "purchased", D: "communicated"}, answer: "D" },
+            { question: "Neighbors _____ to the police about the noise from the building site.", options: {A: "complained", B: "recognized", C: "suspected", D: "composed"}, answer: "A" },
+            { question: "Many firms are _____ on increasing their markets overseas.", options: {A: "exposing", B: "illustrating", C: "concentrating", D: "purchasing"}, answer: "C" },
+            { question: "Her clinic has a _____ stream of parents wanting help.", options: {A: "instant", B: "positive", C: "social", D: "constant"}, answer: "D" },
+            { question: "The new drug is much more _____ in treating headaches.", options: {A: "effective", B: "absolute", C: "content", D: "evident"}, answer: "A" },
+            { question: "What is the best way to _____ our vocabulary?", options: {A: "publish", B: "enlarge", C: "waken", D: "involve"}, answer: "B" },
+            { question: "An unhappy home _____ can affect a child's behavior.", options: {A: "circumstances", B: "environment", C: "surroundings", D: "neighbor"}, answer: "B" },
+            { question: "You should learn to _____ the situation in the right way.", options: {A: "handle", B: "promote", C: "shift", D: "invent"}, answer: "A" },
+            { question: "I'll have an _____ to visit the Bund when I'm in Shanghai.", options: {A: "emotion", B: "entertainment", C: "approach", D: "opportunity"}, answer: "D" },
+            { question: "We can't act on your advice. _____ , thank you for giving it.", options: {A: "Eventually", B: "Occasionally", C: "Nevertheless", D: "Reluctantly"}, answer: "C" },
+            { question: "They have started the _____ for establishing a new office.", options: {A: "network", B: "package", C: "foundation", D: "process"}, answer: "D" },
+            { question: "He gave his son some money for the _____ of his school books.", options: {A: "benefit", B: "occasion", C: "purchase", D: "intention"}, answer: "C" },
+            { question: "It is said that the news comes from _____ sources.", options: {A: "efficient", B: "reliable", C: "prosperous", D: "worthwhile"}, answer: "B" },
+            { question: "The government has no long-term _____ for reducing crime.", options: {A: "strategy", B: "string", C: "sample", D: "stretch"}, answer: "A" },
+            { question: "To _____ , I agree with a large part of his argument.", options: {A: "qualify", B: "summarize", C: "arrange", D: "expose"}, answer: "B" },
+            { question: "_____ his earnings as a football coach, he also runs a sports shop.", options: {A: "In terms of", B: "Far from", C: "Except for", D: "Apart from"}, answer: "D" },
+            { question: "When you are handling so many affairs at a time, mistakes _____ happen.", options: {A: "face up to", B: "look up to", C: "are bound to", D: "are able to"}, answer: "C" },
+            { question: "_____ his flat in London, he has a villa in Scotland.", options: {A: "In addition to", B: "According to", C: "With respect to", D: "Owing to"}, answer: "A" },
+            { question: "Most of these topics have been discussed _____ at the meeting.", options: {A: "in practice", B: "at fault", C: "by no means", D: "in detail"}, answer: "D" },
+            { question: "The milkman delivers us milk _____ .", options: {A: "at a time", B: "on a regular basis", C: "with little effect", D: "for a while"}, answer: "B" },
+            { question: "They played the same record _____ .", options: {A: "over and over again", B: "a great deal", C: "hand in hand", D: "all of a sudden"}, answer: "A" },
+            { question: "The law should be _____ as soon as possible.", options: {A: "out of the question", B: "made a difference", C: "put into practice", D: "out of place"}, answer: "C" },
+            { question: "You can _____ opportunities to practice speaking the language.", options: {A: "look out", B: "seek out", C: "turn out", D: "carry out"}, answer: "B" },
+            { question: "_____ cars when you are crossing the road.", options: {A: "Look forward to", B: "Put up with", C: "Go ahead with", D: "Watch out for"}, answer: "D" },
+            
+            // 第二组（25题）
+            { question: "We tried to dissuade him _____ swimming across the lake, but he didn't listen.", options: {A: "into", B: "from", C: "without", D: "off"}, answer: "B" },
+            { question: "The city was extensively _____ during that horrible earthquake.", options: {A: "hurt", B: "injured", C: "wounded", D: "damaged"}, answer: "D" },
+            { question: "Though the job was extremely difficult, they were _____ to finish it on time.", options: {A: "determined", B: "decided", C: "attempted", D: "considered"}, answer: "A" },
+            { question: "Tom invented a _____ to make the door shut by itself.", options: {A: "cape", B: "gale", C: "device", D: "sword"}, answer: "C" },
+            { question: "He gave up his seat on the bus to an old woman _____ nearby.", options: {A: "stand", B: "stood", C: "stands", D: "standing"}, answer: "D" },
+            { question: "Though she is nearly 65, Mary doesn't want to _____ .", options: {A: "work", B: "accomplish", C: "retire", D: "conquer"}, answer: "C" },
+            { question: "He flew from Europe to Tokyo by the _____ across the Pole.", options: {A: "course", B: "route", C: "way", D: "routine"}, answer: "B" },
+            { question: "All the crew _____ saved in the end.", options: {A: "were", B: "was", C: "has been", D: "have"}, answer: "A" },
+            { question: "The football team _____ organized last week.", options: {A: "were", B: "was", C: "has been", D: "have"}, answer: "B" },
+            { question: "The Red Army _____ 25,000 Li on their long march.", options: {A: "recovered", B: "discovered", C: "covered", D: "uncovered"}, answer: "C" },
+            { question: "_____ , the fire was discovered soon after it had started.", options: {A: "Fortunately", B: "Previously", C: "Undoubtedly", D: "Calmly"}, answer: "A" },
+            { question: "Mary asked her mother to _____ her at 8 next morning.", options: {A: "wake", B: "awaken", C: "waken", D: "awake"}, answer: "C" },
+            { question: "The uninteresting film _____ on for more than two hours.", options: {A: "pulled", B: "pushed", C: "drew", D: "dragged"}, answer: "D" },
+            { question: "It is dangerous for a girl to make a _____ trip.", options: {A: "single-hand", B: "singly-hand", C: "single-handed", D: "singly-handed"}, answer: "C" },
+            { question: "He says you are _____ the best candidate.", options: {A: "by far", B: "as far", C: "too far", D: "much far"}, answer: "A" },
+            { question: "The boat _____ , throwing the boys into the water.", options: {A: "turned up", B: "turned over", C: "turned down", D: "turned away"}, answer: "B" },
+            { question: "The accident was not serious at all --- it did _____ to either car.", options: {A: "a few damages", B: "few damage", C: "a little damage", D: "little damage"}, answer: "D" },
+            { question: "What he has done can be praised as a real _____ .", options: {A: "adventure", B: "venture", C: "risk", D: "torture"}, answer: "A" },
+            { question: "Poor Susan got a serious seasick during the _____ .", options: {A: "journey", B: "tour", C: "voyage", D: "trip"}, answer: "C" },
+            { question: "He has been ill for a week so he has to _____ the test tomorrow.", options: {A: "give in", B: "give up", C: "give back", D: "give away"}, answer: "B" },
+            { question: "The pilot tried to _____ the controlling station, but failed.", options: {A: "contact", B: "connect", C: "contract", D: "contrast"}, answer: "A" },
+            { question: "_____ all American cities, San Francisco is considered to be the most beautiful.", options: {A: "In", B: "For", C: "Of", D: "With"}, answer: "C" },
+            { question: "Bill Clinton _____ George Bush for the presidency in 1992.", options: {A: "defeated", B: "won", C: "beat", D: "hit"}, answer: "A" },
+            { question: "After studying Unit One, we all _____ to improve our study habits.", options: {A: "set down", B: "set in", C: "set up", D: "set off"}, answer: "D" },
+            { question: "I can't help _____ that it was a mistake to let him go.", options: {A: "to think", B: "thinking", C: "thought", D: "think"}, answer: "B" },
+            
+            // 第三组（25题）
+            { question: "This new expressway _____ the trip from this city to the capital.", options: {A: "shortens", B: "widens", C: "broadens", D: "quickens"}, answer: "A" },
+            { question: "Prof. Smith is not a stranger to us. We've met him on several _____ .", options: {A: "situations", B: "cases", C: "places", D: "occasions"}, answer: "D" },
+            { question: "I like wearing _____ at home, for they are comfortable.", options: {A: "boots", B: "slippers", C: "stockings", D: "high heels"}, answer: "B" },
+            { question: "That hard-working boy got a gold _____ in the mathematics competition.", options: {A: "mental", B: "metal", C: "medal", D: "model"}, answer: "C" },
+            { question: "It is _____ to find him absent from school.", options: {A: "rare", B: "seldom", C: "never", D: "few"}, answer: "A" },
+            { question: "Jim had a _____ problem with his car, and he fixed it quickly all by himself.", options: {A: "serious", B: "major", C: "severe", D: "minor"}, answer: "D" },
+            { question: "He hasn't got enough clothes on --- look, he's _____ with cold.", options: {A: "trembling", B: "trembled", C: "tremble", D: "tremble"}, answer: "A" },
+            { question: "After much thought, we _____ agreed to let him go.", options: {A: "immediately", B: "efficiently", C: "excitedly", D: "reluctantly"}, answer: "D" },
+            { question: "The city's transport system is one of the most _____ in Europe.", options: {A: "enough", B: "sufficient", C: "efficient", D: "effective"}, answer: "C" },
+            { question: "He was caught spitting in the public and fined ten Yuan on the _____ .", options: {A: "spot", B: "place", C: "ground", D: "occasion"}, answer: "A" },
+            { question: "If you have worked hard _____ , you won't have to sit up before the exams.", options: {A: "for the time being", B: "from time to time", C: "once in a while", D: "at other times"}, answer: "D" },
+            { question: "To my great _____ , my mother's post didn't come to me on time.", options: {A: "happiness", B: "satisfaction", C: "disappointment", D: "pleasure"}, answer: "C" },
+            { question: "I was so careless that I threw the _____ letter into the mailbox.", options: {A: "unprepared", B: "unsealed", C: "unread", D: "unpacked"}, answer: "B" },
+            { question: "They were _____ to move house, but they had no choice.", options: {A: "reluctant", B: "relieved", C: "relaxed", D: "reliable"}, answer: "A" },
+            { question: "After having sat down on the chair, he took out a _____ of cigarettes.", options: {A: "parcel", B: "package", C: "packet", D: "pack"}, answer: "C" },
+            { question: "He is worried a lot now, for he has lost a _____ of keys today.", options: {A: "mass", B: "pile", C: "piece", D: "bunch"}, answer: "D" },
+            { question: "I think you should let Mary go camping. _____ , she is a big girl now.", options: {A: "Moreover", B: "In addition", C: "After all", D: "Nevertheless"}, answer: "C" },
+            { question: "As a fireman, you must be ready to _____ hardships and even suffer death.", options: {A: "endure", B: "escape", C: "arrange", D: "flutter"}, answer: "A" },
+            { question: "They did more work than others but refused to take any _____ pay.", options: {A: "regular", B: "extra", C: "unusual", D: "primary"}, answer: "B" },
+            { question: "We should respect the _____ and take good care of the children.", options: {A: "aging", B: "age", C: "ageless", D: "aged"}, answer: "D" },
+            { question: "He is perfectly _____ to live alone and paint pictures all day.", options: {A: "content", B: "contract", C: "context", D: "contrast"}, answer: "A" },
+            { question: "The tourist guide has _____ for us to visit the Great Wall tomorrow.", options: {A: "prepared", B: "arranged", C: "planned", D: "scheduled"}, answer: "B" },
+            { question: "The old lady dropped her spoon and bent to _____ .", options: {A: "take it up", B: "put it up", C: "pick it up", D: "give it up"}, answer: "C" },
+            { question: "We say, even the king will have some poor _____ .", options: {A: "relations", B: "relatives", C: "relationships", D: "relativities"}, answer: "B" },
+            { question: "_____ with life in his hometown, the young man moved away to the city.", options: {A: "Being not content", B: "Not being content", C: "Be not content", D: "Don't content"}, answer: "B" },
+            
+            // 第四组（25题）
+            { question: "The crop failure was due _____ to the drought.", options: {A: "at most", B: "in part", C: "after all", D: "by far"}, answer: "B" },
+            { question: "Noise is a _____ when you are trying to study.", options: {A: "disconnection", B: "distraction", C: "distribution", D: "distinction"}, answer: "B" },
+            { question: "To be quite _____ about it, your plan is utterly impractical.", options: {A: "honest", B: "honesty", C: "honestly", D: "dishonest"}, answer: "A" },
+            { question: "Although she was born in the old society, she managed to become a _____ woman.", options: {A: "literal", B: "literary", C: "literature", D: "literate"}, answer: "D" },
+            { question: "Some TV _____ will surely do good to children.", options: {A: "procedures", B: "prospects", C: "programs", D: "projects"}, answer: "C" },
+            { question: "By using the instrument, you can produce wonderful _____ music.", options: {A: "electric", B: "electrical", C: "electronic", D: "elective"}, answer: "C" },
+            { question: "_____ the essay looked quite good, but actually it was full of mistakes.", options: {A: "At a time", B: "At other times", C: "As a result", D: "At first glance"}, answer: "D" },
+            { question: "Mr. Smith kept thinking hard, but failed to _____ a workable plan.", options: {A: "come up with", B: "bring together", C: "grow up", D: "look after"}, answer: "A" },
+            { question: "The government is taking _____ measures to overcome current difficulties.", options: {A: "enough", B: "effective", C: "efficient", D: "determined"}, answer: "B" },
+            { question: "We should always remember that truth is the _____ of practice.", options: {A: "product", B: "production", C: "produce", D: "productivity"}, answer: "A" },
+            { question: "He took a _____ at his watch and saw that it was already lunch time.", options: {A: "stare", B: "gaze", C: "watch", D: "glance"}, answer: "D" },
+            { question: "Don't _____ yourself in unnecessary expense.", options: {A: "include", B: "contain", C: "involve", D: "join"}, answer: "C" },
+            { question: "The old lady spoke of her dead daughter with _____ .", options: {A: "emotional", B: "emotion", C: "emotionally", D: "unemotional"}, answer: "B" },
+            { question: "A person's real age sometimes doesn't correspond to his or her _____ age.", options: {A: "moral", B: "metal", C: "medal", D: "mental"}, answer: "D" },
+            { question: "Unfortunately, the survival _____ of this species is still declining.", options: {A: "rate", B: "speed", C: "percent", D: "ability"}, answer: "A" },
+            { question: "I have spent all my pocket money on _____ books this year.", options: {A: "worth", B: "worthwhile", C: "worthy", D: "worthless"}, answer: "B" },
+            { question: "The mayor put forward a _____ to improve public transportation.", options: {A: "activity", B: "distraction", C: "proposal", D: "network"}, answer: "C" },
+            { question: "Both parents should take responsibility for the _____ needs of their children.", options: {A: "social", B: "current", C: "emotional", D: "typical"}, answer: "C" },
+            { question: "After I had finished eating, he _____ to set off immediately.", options: {A: "suggested", B: "raised", C: "advised", D: "proposed"}, answer: "D" },
+            { question: "Students from middle school should be _____ from smoking.", options: {A: "prohibited", B: "persuaded", C: "permitted", D: "performed"}, answer: "A" },
+            { question: "Don't be surprised. It was _____ of her to say that.", options: {A: "usual", B: "typical", C: "common", D: "normal"}, answer: "B" },
+            { question: "I am afraid that the _____ between rich and poor is still widening in our country.", options: {A: "distance", B: "range", C: "crack", D: "gap"}, answer: "D" },
+            { question: "I _____ my whole vacation in preparing for the coming Band Four exam.", options: {A: "spent", B: "paid", C: "cost", D: "took"}, answer: "A" },
+            { question: "The main task of the committee was organizing cultural _____ .", options: {A: "acts", B: "actions", C: "activities", D: "activeness"}, answer: "C" },
+            { question: "I don't wish to be _____ in my work, so please come tomorrow.", options: {A: "bored", B: "disturbed", C: "requested", D: "destroyed"}, answer: "B" },
+            
+            // 第五组（25题）
+            { question: "Once she's set her _____ on something, there's no stopping her.", options: {A: "heart", B: "soul", C: "mind", D: "head"}, answer: "C" },
+            { question: "To _____ sure of getting a seat you should arrive early at the cinema.", options: {A: "be", B: "get", C: "make", D: "feel"}, answer: "C" },
+            { question: "If you drive a car all your life, the _____ are that you'll have an accident at some point.", options: {A: "odds", B: "rates", C: "means", D: "tones"}, answer: "A" },
+            { question: "If you want to have some improvements in your study, there _____ to be some changes in your studying habits.", options: {A: "should", B: "must", C: "need", D: "ought"}, answer: "D" },
+            { question: "There was a time, and not so long ago _____ , when she walked twenty miles a day.", options: {A: "too", B: "either", C: "as well", D: "neither"}, answer: "B" },
+            { question: "Since I _____ up early yesterday morning, I saw the whole course of the murder.", options: {A: "woke", B: "wakened", C: "awoke", D: "awakened"}, answer: "A" },
+            { question: "Every morning he gets up early and goes into the _____ to feel his pony.", options: {A: "barn", B: "garden", C: "stable", D: "cabin"}, answer: "C" },
+            { question: "I think there is a train at 6, but you had better make _____ .", options: {A: "real", B: "true", C: "right", D: "sure"}, answer: "D" },
+            { question: "He could not help walking to and fro, for he was _____ at the false accusation.", options: {A: "indifferent", B: "indignant", C: "inevitable", D: "irrelevant"}, answer: "B" },
+            { question: "She was _____ to find that no one admired her performance.", options: {A: "damaged", B: "wounded", C: "hurt", D: "injured"}, answer: "C" },
+            { question: "Eggs are _____ and expensive this month.", options: {A: "scarce", B: "rare", C: "little", D: "short"}, answer: "A" },
+            { question: "Turn round the corner and you will _____ sight of the railway station.", options: {A: "lose", B: "keep", C: "get", D: "catch"}, answer: "D" },
+            { question: "During the fancy dress ball, John _____ himself up as a pirate.", options: {A: "wore", B: "dressed", C: "put", D: "covered"}, answer: "B" },
+            { question: "We should learn to _____ those who are in trouble.", options: {A: "relax", B: "persuade", C: "comfort", D: "handle"}, answer: "C" },
+            { question: "The mother waited with great _____ for news of her son's safe arrival.", options: {A: "anger", B: "pleasure", C: "pity", D: "anxiety"}, answer: "D" },
+            { question: "The patient's wound began to _____ after the operation.", options: {A: "ache", B: "pain", C: "reject", D: "relieve"}, answer: "A" },
+            { question: "The story is beautifully _____ and is sure to attract children of all ages.", options: {A: "published", B: "illustrated", C: "enclosed", D: "wrapped"}, answer: "B" },
+            { question: "There are plastic and wooden garden chairs but _____ are more expensive.", options: {A: "the next", B: "the latter", C: "the second", D: "the later"}, answer: "B" },
+            { question: "Henry listened and heard nothing but the _____ of his own voice.", options: {A: "sounds", B: "words", C: "exclamations", D: "echoes"}, answer: "D" },
+            { question: "Let Susan have the chocolate biscuits because they are her _____ .", options: {A: "favorites", B: "foods", C: "recipes", D: "privileges"}, answer: "A" },
+            { question: "I'm improving! I got a B for last week's composition and an A _____ for this.", options: {A: "under", B: "below", C: "minus", D: "less"}, answer: "C" },
+            { question: "The poor girl was so frightened that she could do _____ but stand there weeping.", options: {A: "nothing", B: "something", C: "anything", D: "everything"}, answer: "A" },
+            { question: "Much to my surprise Alan suddenly _____ song.", options: {A: "focus on", B: "turn out", C: "bring about", D: "burst into"}, answer: "D" },
+            { question: "Twenty students were chosen _____ to take part in the experiment.", options: {A: "after all", B: "at random", C: "for instance", D: "in a row"}, answer: "B" },
+            { question: "That big _____ desk takes up too much space in my small office.", options: {A: "written", B: "write", C: "wrote", D: "writing"}, answer: "D" },
+            
+            // 第六组（25题）
+            { question: "Life was hard then. She had no chance to go to school, even _____ school.", options: {A: "basic", B: "introductory", C: "elementary", D: "famous"}, answer: "C" },
+            { question: "Whenever he found himself in difficulty, Joe would _____ his workmates.", options: {A: "turn over", B: "watch out for", C: "look after", D: "consult with"}, answer: "D" },
+            { question: "Workers' incomes are not _____ up with inflation.", options: {A: "putting", B: "keeping", C: "holding", D: "working"}, answer: "B" },
+            { question: "Let's _____ the arrangement with the others before we make a decision.", options: {A: "talk over", B: "find out", C: "turn out", D: "burst into"}, answer: "A" },
+            { question: "Though an outstanding scientist, the professor was often _____ in his personal life.", options: {A: "absent-mind", B: "absent-minding", C: "absent-minded", D: "absent-minds"}, answer: "C" },
+            { question: "_____ nonsense the newspapers print, some people always believe it.", options: {A: "Whatsoever", B: "Wherever", C: "Whomever", D: "Whichever"}, answer: "A" },
+            { question: "She could not help weeping after she had found her favorite watch _____ .", options: {A: "missed", B: "miss", C: "to be missed", D: "missing"}, answer: "D" },
+            { question: "The _____ audience left the cinema one after another before the ________ film drew to the end.", options: {A: "boring … bored", B: "boring … boring", C: "bored … boring", D: "bored … bored"}, answer: "C" },
+            { question: "“Child” has an _____ plural form “children”.", options: {A: "irregular", B: "unregular", C: "disregular", D: "inregular"}, answer: "A" },
+            { question: "His job is rather simple and dull. Every day he stands by the _____ and put products into boxes.", options: {A: "assembling line", B: "assembly line", C: "assemble line", D: "assembled line"}, answer: "B" },
+            { question: "She often sleeps during the day time, because her work is on night _____ .", options: {A: "change", B: "turn", C: "shift", D: "move"}, answer: "C" },
+            { question: "It is true that these herbs can be used to _____ pain.", options: {A: "release", B: "relax", C: "remove", D: "relieve"}, answer: "D" },
+            { question: "The little fox was not clever enough to miss _____ by the hunter.", options: {A: "catching", B: "caught", C: "been caught", D: "being caught"}, answer: "D" },
+            { question: "An expert is _____ who has special knowledge, skill or training.", options: {A: "one", B: "that", C: "such", D: "what"}, answer: "A" },
+            { question: "They are making _____ efforts to decrease the cost of production.", options: {A: "farther", B: "further", C: "father", D: "furthermore"}, answer: "B" },
+            { question: "Sam believes that beautification of the dull setting _____ greater productivity.", options: {A: "results from", B: "hold up", C: "take over", D: "results in"}, answer: "D" },
+            { question: "I hadn't seen him for 16 years, but I _____ him immediately.", options: {A: "recognized", B: "recalled", C: "reminded", D: "reflected"}, answer: "A" },
+            { question: "Being a manager, he has paid a lot of attention to the _____ in his factory.", options: {A: "sufficiency", B: "efficiency", C: "influence", D: "endurance"}, answer: "B" },
+            { question: "In the past twenty years our country has got great achievement in _____ field.", options: {A: "industrial", B: "industrious", C: "industrialist", D: "industrialism"}, answer: "A" },
+            { question: "Noise is unpleasant, _____ when you're trying to sleep.", options: {A: "specially", B: "physically", C: "especially", D: "naturally"}, answer: "C" },
+            { question: "As neither _____ nor labor would give in, the union organized a strike.", options: {A: "manager", B: "management", C: "managing", D: "manage"}, answer: "B" },
+            { question: "Don't be so serious! This is only a story that has no _____ in fact.", options: {A: "concentration", B: "illustration", C: "explanation", D: "foundation"}, answer: "D" },
+            
+            // 第七组（25题）
+            { question: "Standing on the stage, in front of so many people, I felt quite _____ .", options: {A: "out of order", B: "out of place", C: "out of question", D: "out of work"}, answer: "B" },
+            { question: "People are always mistaking him _____ his twin brother.", options: {A: "as", B: "from", C: "with", D: "for"}, answer: "D" },
+            { question: "As a senior executive, you can enjoy certain _____ , such as free health insurance and the right to buy shares in the company.", options: {A: "advantages", B: "privileges", C: "profits", D: "interests"}, answer: "B" },
+            { question: "Poor old George has _____ down in the world since his business failed.", options: {A: "come", B: "fallen", C: "broken", D: "gone"}, answer: "A" },
+            { question: "We can't _____ a holiday to go away this summer.", options: {A: "spend", B: "pay", C: "afford", D: "cost"}, answer: "C" },
+            { question: "She has tried on one after _____ of the skirts, but still has not decided which one to buy.", options: {A: "the other", B: "another", C: "other", D: "each other"}, answer: "B" },
+            { question: "The foreigner _____ the moon cake and found it very delicious.", options: {A: "sampled", B: "stung", C: "scraped", D: "spoiled"}, answer: "A" },
+            { question: "How strange it is! He looks as if he _____ all about it.", options: {A: "knows", B: "know", C: "knew", D: "has known"}, answer: "C" },
+            { question: "He is full of good _____ , but can do nothing to help.", options: {A: "attentions", B: "inventions", C: "attractions", D: "intentions"}, answer: "D" },
+            { question: "He must be very poor, for he is wearing old and _____ clothes.", options: {A: "torn", B: "tore", C: "teared", D: "tearing"}, answer: "A" },
+            { question: "He _____ the old woman out of her money by selling her a house that did not exist.", options: {A: "tricked", B: "cheated", C: "deceived", D: "persuaded"}, answer: "B" },
+            { question: "Would you please _____ me a favour by lending me your bicycle for a few days?", options: {A: "make", B: "give", C: "do", D: "help"}, answer: "C" },
+            { question: "The shop assistant _____ out the food on the counter.", options: {A: "displayed", B: "spread", C: "arranged", D: "laid"}, answer: "D" },
+            { question: "They were arguing but _____ off when someone suddenly came into the room.", options: {A: "took", B: "turned", C: "broke", D: "came"}, answer: "C" },
+            { question: "He is _____ of having a hand in the recently happened affair.", options: {A: "suspected", B: "inspected", C: "doubted", D: "expected"}, answer: "A" },
+            { question: "Chinese people on both sides of the Taiwan Strait _____ for reunification.", options: {A: "dream", B: "desire", C: "think", D: "long"}, answer: "D" },
+            { question: "After failing four times, I _____ passed my driving test.", options: {A: "permanently", B: "eventually", C: "occasionally", D: "accidentally"}, answer: "B" },
+            { question: "There must have happened something special. They are all _____ in white.", options: {A: "put", B: "worn", C: "covered", D: "dressed"}, answer: "D" },
+            { question: "The soldiers stood _____ for the officer's inspection.", options: {A: "in a row", B: "out of place", C: "in advance", D: "in vain"}, answer: "A" },
+            { question: "As soon as the man _____ his gun, I knew he was a robber.", options: {A: "counted out", B: "broke off", C: "pulled out", D: "held up"}, answer: "C" },
+            { question: "From the pictures you can select the one which is most to your _____ .", options: {A: "desire", B: "taste", C: "flavor", D: "favor"}, answer: "B" },
+            { question: "Flowers were slowly _____ out by the old lady before the tomb of her husband.", options: {A: "laid", B: "lied", C: "layed", D: "lain"}, answer: "A" },
+            { question: "The narrator sincerely wished that he could _____ his tactless words.", options: {A: "take apart", B: "take out", C: "take back", D: "take off"}, answer: "C" },
+            { question: "We had fine weather all through July _____ an occasional thunderstorm.", options: {A: "apart from", B: "except for", C: "in addition to", D: "as well as"}, answer: "B" },
+            { question: "He always takes full _____ of the mistakes made by his rivals.", options: {A: "interest", B: "benefit", C: "profit", D: "advantage"}, answer: "D" },
+            
+            // 第八组（25题）
+            { question: "You'll soon find it isn't an easy job to try and _____ everybody in the office.", options: {A: "pleasure", B: "please", C: "plead", D: "pledge"}, answer: "B" },
+            { question: "Only yesterday did I see him jogging in the park, so I am _____ at the news of his death.", options: {A: "shocked", B: "interested", C: "touched", D: "moved"}, answer: "A" },
+            { question: "The enemy camps _____ for ten miles.", options: {A: "spread", B: "extended", C: "stretched", D: "expanded"}, answer: "C" },
+            { question: "Many immigrants came to the US _____ the American Dream.", options: {A: "in search of", B: "something like", C: "in spite of", D: "in addition to"}, answer: "A" },
+            { question: "A doctor should be _____ for the lives of patients.", options: {A: "suitable", B: "famous", C: "responsible", D: "critical"}, answer: "C" },
+            { question: "It was so quiet in this village. We _____ carefully but ________ nothing.", options: {A: "listened to … heard", B: "listened … heard", C: "heard … listened to", D: "heard … listened"}, answer: "B" },
+            { question: "Jack found a piece of paper on the ground and _____ to pick it up.", options: {A: "stood", B: "stopped", C: "stayed", D: "stooped"}, answer: "D" },
+            { question: "In the report, names have been changed to protect the _____ of those involved.", options: {A: "privacy", B: "private", C: "privilege", D: "priority"}, answer: "A" },
+            { question: "Confidence in your own abilities is _____ to your success in the job of a team leader.", options: {A: "of important first", B: "of first importance", C: "importance of first", D: "first of importance"}, answer: "B" },
+            { question: "Susan hoped John would take the _____ and leave her alone.", options: {A: "words", B: "speech", C: "hint", D: "element"}, answer: "C" },
+            { question: "_____ Something like one thousand people attended the conference.", options: {A: "Like something", B: "Anything like", C: "Like anything", D: "Something like"}, answer: "D" },
+            { question: "Mary's mother managed to _____ the money for her tuition and fees.", options: {A: "hold back", B: "think over", C: "scrape together", D: "count out"}, answer: "C" },
+            { question: "About three weeks after I started looking, I _____ an advertisement for a math teacher.", options: {A: "made out", B: "came upon", C: "pulled out", D: "decided on"}, answer: "B" },
+            { question: "My uncle's generous contributions helped make my wish to visit Europe _____ .", options: {A: "come true", B: "come through", C: "come about", D: "come down"}, answer: "A" },
+            { question: "Don't worry; we'll get the lost money back _____ .", options: {A: "anywhere", B: "anyhow", C: "somewhere", D: "somehow"}, answer: "D" },
+            { question: "What he told you the other day is _____ impossible.", options: {A: "completely", B: "absolutely", C: "fully", D: "wholly"}, answer: "B" },
+            { question: "Workers _____ to the press that they were going on strike.", options: {A: "revealed", B: "relieved", C: "reflected", D: "recommended"}, answer: "A" },
+            { question: "It is a pity that disease has _____ her of her memory.", options: {A: "denied", B: "rejected", C: "robbed", D: "declined"}, answer: "C" },
+            { question: "There's no _____ denying that this will be a serious blow to the government.", options: {A: "denial", B: "deny", C: "denies", D: "denying"}, answer: "D" },
+            { question: "Several cars have caught fire _____ while parked.", options: {A: "personally", B: "instinctively", C: "spontaneously", D: "moderately"}, answer: "C" },
+            { question: "A look of _____ came into his eyes as he read the telegram.", options: {A: "surprising", B: "surprisingly", C: "surprised", D: "surprise"}, answer: "D" },
+            { question: "Professor Johnson has agreed to _____ the time limit for our term paper.", options: {A: "spread", B: "extend", C: "lengthen", D: "widen"}, answer: "B" },
+            { question: "For twenty years, he was the most active and _____ scholar in the world.", options: {A: "admired", B: "admiring", C: "admiral", D: "admitting"}, answer: "A" }
+        ];
+
+        // 2. 单词拼写题目数据（完整120+词）
+        const wordQuestions = [
+            { question: "汲取；吸收", answer: "absorb" },
+            { question: "对（某人某事的）了解；认识；熟人", answer: "acquaintance" },
+            { question: "分配（任务）给某人", answer: "assign" },
+            { question: "知道的；意识到的", answer: "aware" },
+            { question: "掌握，运用能力", answer: "command" },
+            { question: "做出（错或非法的事）；犯（罪或错等）", answer: "commit" },
+            { question: "交流情况（消息、思想等）；沟通", answer: "communicate" },
+            { question: "抱怨", answer: "complain" },
+            { question: "集中注意力，专心", answer: "concentrate" },
+            { question: "经常（发生）的，不断的", answer: "constant" },
+            { question: "有效的", answer: "effective" },
+            { question: "扩大，放大；变大", answer: "enlarge" },
+            { question: "环境；自然（生态）环境", answer: "environment" },
+            { question: "处理，对付，控制", answer: "handle" },
+            { question: "方法，手段", answer: "means" },
+            { question: "然而，尽管如此", answer: "nevertheless" },
+            { question: "机会", answer: "opportunity" },
+            { question: "过程", answer: "process" },
+            { question: "购买；购置物（v. 购买）", answer: "purchase" },
+            { question: "可靠的", answer: "reliable" },
+            { question: "策略", answer: "strategy" },
+            { question: "总结；概括，概述", answer: "summarize" },
+            { question: "完成", answer: "accomplish" },
+            { question: "征服，克服", answer: "conquer" },
+            { question: "联系，接触", answer: "contact" },
+            { question: "行过（一段距离）", answer: "cover" },
+            { question: "设备；装置", answer: "device" },
+            { question: "拖，拉", answer: "drag" },
+            { question: "接着的；下列的", answer: "following" },
+            { question: "幸运地；幸亏", answer: "fortunately" },
+            { question: "此外；而且", answer: "moreover" },
+            { question: "在附近", answer: "nearby" },
+            { question: "噩梦", answer: "nightmare" },
+            { question: "以前", answer: "previous" },
+            { question: "退休", answer: "retire" },
+            { question: "无疑地", answer: "undoubtedly" },
+            { question: "航海；航行", answer: "voyage" },
+            { question: "唤醒；醒来", answer: "waken" },
+            { question: "作安排，筹划", answer: "arrange" },
+            { question: "（一）束，（一）串", answer: "bunch" },
+            { question: "满意的；高兴的", answer: "content" },
+            { question: "十年，十年期", answer: "decade" },
+            { question: "高效的", answer: "efficient" },
+            { question: "忍受，忍耐", answer: "endure" },
+            { question: "奖章", answer: "medal" },
+            { question: "较小的；次要的", answer: "minor" },
+            { question: "时刻，时机；场合", answer: "occasion" },
+            { question: "开刀，动手术", answer: "operate" },
+            { question: "包裹,小包", answer: "parcel" },
+            { question: "邮递员", answer: "postman" },
+            { question: "最初的；首要的；根本的", answer: "primary" },
+            { question: "罕见的；不常发生的", answer: "rare" },
+            { question: "不情愿的；勉强的", answer: "reluctantly" },
+            { question: "点，斑点", answer: "spot" },
+            { question: "颤抖", answer: "tremble" },
+            { question: "活动", answer: "activity" },
+            { question: "真实地；实际上", answer: "actually" },
+            { question: "仅仅，勉强；几乎没有", answer: "barely" },
+            { question: "当前的", answer: "current" },
+            { question: "使烦恼", answer: "disturb" },
+            { question: "感情的", answer: "emotional" },
+            { question: "快乐；乐趣；娱乐", answer: "entertainment" },
+            { question: "缺口，间隙；分歧，隔阂", answer: "gap" },
+            { question: "发明", answer: "invent" },
+            { question: "（必须）包括", answer: "involve" },
+            { question: "邻近地区；地段", answer: "neighborhood" },
+            { question: "广播（或电视）联播公司；广播（或电视）网", answer: "network" },
+            { question: "禁止", answer: "prohibit" },
+            { question: "提议，建议", answer: "proposal" },
+            { question: "率", answer: "rate" },
+            { question: "社会的", answer: "social" },
+            { question: "典型的", answer: "typical" },
+            { question: "值得花时间（或精力）的；有价值的", answer: "worthwhile" },
+            { question: "很旧的；古代的", answer: "ancient" },
+            { question: "背景；底色", answer: "background" },
+            { question: "合同", answer: "contract" },
+            { question: "回声，反响；v. 发出回声", answer: "echo" },
+            { question: "使窘迫；使尴尬", answer: "embarrass" },
+            { question: "附上；围住", answer: "enclose" },
+            { question: "最喜欢的人（或物）；a. 最受喜爱的", answer: "favorite" },
+            { question: "天才(人物)；天赋", answer: "genius" },
+            { question: "（大学）毕业；n. 毕业生", answer: "graduate" },
+            { question: "给...画插图；举例说明", answer: "illustrate" },
+            { question: "笑（声）", answer: "laughter" },
+            { question: "待洗（或已洗的）衣物；洗衣店", answer: "laundry" },
+            { question: "稍差一点的；低于零的；负数的；prep. 减去；零以下", answer: "minus" },
+            { question: "胡说，废话；荒谬的想法", answer: "nonsense" },
+            { question: "极大的困难；可能性", answer: "odds" },
+            { question: "包装袋，包装盒；包；袋；盒", answer: "package" },
+            { question: "出版，发行；发布", answer: "publish" },
+            { question: "资格", answer: "qualification" },
+            { question: "使可胜任；使具有资格，使合格", answer: "qualify" },
+            { question: "学期", answer: "semester" },
+            { question: "线，细绳", answer: "string" },
+            { question: "在世界各地；a. 世界范围的", answer: "worldwide" },
+            { question: "使大为惊讶，使惊愕", answer: "amaze" },
+            { question: "申请，请求；v. 使用，应用", answer: "apply" },
+            { question: "职业；生涯", answer: "career" },
+            { question: "减少", answer: "decrease" },
+            { question: "效率", answer: "efficiency" },
+            { question: "专家，能手", answer: "expert" },
+            { question: "调查（或研究）的结果", answer: "findings" },
+            { question: "基础", answer: "foundation" },
+            { question: "此外；而且", answer: "furthermore" },
+            { question: "检查", answer: "inspect" },
+            { question: "资方；管理（部门）", answer: "management" },
+            { question: "观察", answer: "observation" },
+            { question: "项目；方案", answer: "project" },
+            { question: "晋升；促销；提升；促进", answer: "promote" },
+            { question: "认出；识别", answer: "recognize" },
+            { question: "减轻", answer: "relieve" },
+            { question: "班；轮班", answer: "shift" },
+            { question: "不幸的是；遗憾的是", answer: "unfortunately" },
+            { question: "利益，好处；优点", answer: "advantage" },
+            { question: "外表", answer: "appearance" },
+            { question: "欺骗", answer: "cheat" },
+            { question: "尊严", answer: "dignity" },
+            { question: "上了年纪的", answer: "elderly" },
+            { question: "终于，最终", answer: "eventually" },
+            { question: "明显的，明白的", answer: "evident" },
+            { question: "意图；打算；目的", answer: "intention" },
+            { question: "偶尔；间或", answer: "occasionally" },
+            { question: "有把握的，确信的", answer: "positive" },
+            { question: "特权", answer: "privilege" },
+            { question: "富裕的；成功的；昌盛的", answer: "prosperous" },
+            { question: "样品检验员；品尝者", answer: "sample" },
+            { question: "挑选", answer: "select" },
+            { question: "诚恳的；真诚地", answer: "sincere" },
+            { question: "怀疑；猜测", answer: "suspect" },
+            { question: "完全的，绝对的", answer: "absolute" },
+            { question: "习得；获得", answer: "acquire" },
+            { question: "接近；临近", answer: "approach" },
+            { question: "使大为惊讶", answer: "astonish" },
+            { question: "防止；避免", answer: "avoid" },
+            { question: "社区", answer: "community" },
+            { question: "撰写；创作", answer: "compose" },
+            { question: "信心，把握；自信", answer: "confidence" },
+            { question: "危急的；决定性的，关键的", answer: "critical" },
+            { question: "拒绝给予；否认", answer: "deny" },
+            { question: "暴露；使无遮盖（或保护）", answer: "expose" },
+            { question: "感激之情，感恩之心", answer: "gratitude" },
+            { question: "表明；表示；显示", answer: "indicate" },
+            { question: "立即的，立刻的", answer: "instant" },
+            { question: "立即", answer: "instantly" },
+            { question: "幸运的", answer: "lucky" },
+            { question: "支付，付款；支付的款项", answer: "payment" },
+            { question: "私人的，个人的", answer: "private" },
+            { question: "一系列，一排；范围", answer: "range" },
+            { question: "泄露；使显露", answer: "reveal" },
+            { question: "以某种方式；不知为什么", answer: "somehow" },
+            { question: "节俭地使用；（使）变长（或宽），拉长", answer: "stretch" }
+        ];
+
+        // 3. 短语翻译题目数据（完整60+短语）
+        const phraseQuestions = [
+            { question: "apart from", answer: "除...外（还有）" },
+            { question: "at a time", answer: "每次，一次" },
+            { question: "be bound to", answer: "肯定会" },
+            { question: "by no means", answer: "决不" },
+            { question: "in addition to", answer: "除...外（还有）" },
+            { question: "in detail", answer: "详细地" },
+            { question: "on a regular/daily/weekly basis", answer: "经常/每天/每周" },
+            { question: "over and over again", answer: "反复，多次" },
+            { question: "put … into practice", answer: "把...付诸实践" },
+            { question: "seek out", answer: "寻找，找出" },
+            { question: "watch out for", answer: "密切注意" },
+            { question: "be determined to (do sth.)", answer: "决心（做某事）" },
+            { question: "by far", answer: "得多" },
+            { question: "can not help", answer: "禁不住" },
+            { question: "give up", answer: "放弃" },
+            { question: "in spite of", answer: "尽管；虽然" },
+            { question: "set out", answer: "着手，开始" },
+            { question: "turn over", answer: "（使）翻倒，（使）倾覆" },
+            { question: "after all", answer: "毕竟，终究" },
+            { question: "at other times", answer: "在别的时候；平时" },
+            { question: "be sure of", answer: "对...有把握" },
+            { question: "look after", answer: "照料，照顾" },
+            { question: "pick up", answer: "拿起，捡起" },
+            { question: "round/around the corner", answer: "在附近的；即将来临的" },
+            { question: "at first glance", answer: "乍一看；最初考虑时" },
+            { question: "bring together", answer: "使相聚" },
+            { question: "come up with", answer: "想出；提出" },
+            { question: "grow up", answer: "成长，长大" },
+            { question: "have a ball", answer: "玩得开心" },
+            { question: "in part", answer: "在一定程度上；部分地" },
+            { question: "at random", answer: "任意地，胡乱地" },
+            { question: "burst into", answer: "突然...起来" },
+            { question: "fit in", answer: "安排时间做（某事）或见（某人）" },
+            { question: "here and there", answer: "这儿那儿，各处" },
+            { question: "set one's mind on/to", answer: "决心要，一心想" },
+            { question: "to sb.'s astonishment", answer: "令某人惊讶的是" },
+            { question: "work on", answer: "从事于，致力于" },
+            { question: "as a result", answer: "结果；因此" },
+            { question: "except for", answer: "除了...外" },
+            { question: "find out", answer: "查明；发现" },
+            { question: "hold up", answer: "延迟，耽搁；阻碍" },
+            { question: "keep up with", answer: "跟上" },
+            { question: "quality control", answer: "质量控制（管理）" },
+            { question: "result in", answer: "结果是；导致" },
+            { question: "turn out", answer: "结果是" },
+            { question: "and what’s more", answer: "而且，更重要的是" },
+            { question: "break off", answer: "中止；中断" },
+            { question: "do sb. a favo(u)r", answer: "给某人以恩惠；帮某人忙" },
+            { question: "lay out", answer: "陈列" },
+            { question: "long for", answer: "渴望" },
+            { question: "mistake ... for", answer: "把...错认为" },
+            { question: "out of place", answer: "不适当的；不相称的" },
+            { question: "pull out", answer: "抽出，取出" },
+            { question: "take advantage of", answer: "利用" },
+            { question: "to sb.’s taste", answer: "合某人的口味；称某人的心" },
+            { question: "come true", answer: "实现，成真" },
+            { question: "come upon", answer: "偶然遇见（或发现）" },
+            { question: "do well by", answer: "对（某人）好" },
+            { question: "hold back", answer: "抑制，控制" },
+            { question: "in search of", answer: "寻找" },
+            { question: "rob (sb.) of (sth.)", answer: "剥夺；抢劫" },
+            { question: "think over", answer: "认真考虑" }
+        ];
+
+        // 4. 句子翻译题目数据（完整40句）
+        const sentenceQuestions = [
+            { question: "史密斯太太对我抱怨说，她经常发现与自己十六岁的女儿简直无法沟通。", answer: "Mrs. Smith complained to me that she often found it simply impossible to communicate with her 16-year-old daughter." },
+            { question: "我坚信，阅读简写的英文小说是扩大我们词汇量的一种轻松愉快的方法。", answer: "I firmly believe that reading simplified English novels is an easy and enjoyable way of enlarging our vocabulary." },
+            { question: "我认为我们在保护环境不受污染方面还做的不够。", answer: "I don't think we're doing enough to protect our environment from pollution." },
+            { question: "经常看电影不仅会提高你的听力，而且还会帮助你培养说的技能。", answer: "Seeing English movies on a regular basis will not only improve your ear, but will also help you build your speaking skills." },
+            { question: "如果你们对这些学习策略有什么问题，请随便问我。我将更详细地进行讲解。", answer: "If you have any questions about these learning strategies, please feel free to ask me. And I'll explain them in greater detail." },
+            { question: "幸好附近有家医院，我们立即把他送到了那里。", answer: "Fortunately there was a hospital nearby and we took him there at once." },
+            { question: "玛丽觉得单靠自己的力量执行她的计划是困难的。", answer: "Mary thought it difficult to carry out her plan all by herself." },
+            { question: "他决心继续他的实验，不过他将用另一种方法来做。", answer: "He is determined to continue his experiment but this time he'll do it another way." },
+            { question: "她在读这部小说时，不禁想起了她在农村度过的那五年。", answer: "When she read the novel, she couldn't help thinking of the five years she had spent in the countryside." },
+            { question: "我们认为他不能在一刻钟内走完那段路程，但他成功地做到这一点。", answer: "We didn't think he could cover the distance in a quarter of an hour, but he succeeded in doing it." },
+            { question: "那位名演员似乎很乐意在剧中扮演一个次要角色。", answer: "That famous actor seemed content to play a minor part in the play." },
+            { question: "她十分勉强地同意让一位年轻医生为她动手术。", answer: "She agreed, very reluctantly, to be operated on by a young doctor." },
+            { question: "老人读完信后失望之极，竟用颤抖的手把它撕得粉碎。", answer: "After reading the letter the old man was so disappointed that he tore it into little bits with trembling fingers." },
+            { question: "即使他的祖母不能来参加他的生日宴会，她也会寄给他一件可爱的礼物。", answer: "Even if his grandmother could not come to his birthday party, she would send him a lovely present." },
+            { question: "他们已安排好让我们明天去游览长城，我相信我们在那儿一定会玩的很开心。", answer: "They've arranged for us to visit the Great Wall tomorrow, I'm sure we'll have a good time / enjoy ourselves there." },
+            { question: "我真希望你能拿出一个比这更好的解决办法来。", answer: "I do hope that you can come up with a better solution than this one." },
+            { question: "众所周知，肺癌至少部分地是由于吸烟过多而引起的。", answer: "It is well known that lung cancer is caused at least in part by smoking too much." },
+            { question: "接受这份工作就得经常在周末上班，但约翰并不在意。", answer: "To take this job would involve working on weekends frequently, but John didn't mind." },
+            { question: "我提议咱们会后马上去办公室找史密斯教授，邀请他参加我们的英语晚会。", answer: "I propose that we go to find Prof. Smith in his office right after the meeting and invite him to our English evening." },
+            { question: "乍一看，这幅画并不好，但经过仔细观察，我们才发现它的确是一幅杰作。", answer: "At first glance the picture didn't look very good, but after examining it carefully, we found that it was indeed a masterpiece." },
+            { question: "简从书架上拿了一本杂志，开始东一页西一页地随便翻阅。", answer: "Jane picked up a magazine from the bookshelf and started reading here and there at random." },
+            { question: "他们老是对她说她有数学天才，她感到很不好意思。", answer: "She was embarrassed when they kept telling her she had a genius for mathematics." },
+            { question: "我随信附上这篇故事的几张插图。", answer: "With this letter I enclose some illustrations for the story." },
+            { question: "他讲了个故事来说明为什么在详细查看条款之前决不要在任何合同上签字。", answer: "He told a story to illustrate why you should never sign any contract before you have examined its provisions in detail." },
+            { question: "格林大夫忙着研制一种治艾滋病的药物，但从下月起他能安排时间在星期一上午看二十个左右的病人了。", answer: "Dr. Green is busy working on a cure for AIDS, but from next month on he'll be able to fit in twenty patients or so on Monday morning." },
+            { question: "据报道，那条铁路曾因洪水而停止修建。", answer: "It was reported that the building of the railway had been held up by a flood." },
+            { question: "那位外国专家希望在三年内达到所有的目标。", answer: "The foreign expert hopes to achieve all his aims in three years." },
+            { question: "我很想买这本英文词典，遗憾的是我身上带的钱不够。", answer: "I'd like very much to buy the English dictionary. Unfortunately, I haven't got enough money on me." },
+            { question: "一个科学家要跟上本领域的发展，你认为必须做些什么？", answer: "What do you think a scientist must do in order to keep up with the developments in his field?" },
+            { question: "如果优秀工人经常得到加薪和提拔，他们就会有更大的生产积极性。", answer: "If excellent workers get frequent pay increases and promotions, they will have greater incentive to produce." },
+            { question: "他常利用她缺乏生意头脑而欺骗她。", answer: "He often took advantage of her lack of business sense to cheat her." },
+            { question: "萨姆买不起他想要的那种照相机，因为那相机太贵了。", answer: "Sam could not afford the camera he longed for because it was too expensive." },
+            { question: "整个上午他都在忙于写那篇故事，只是偶尔停下来喝杯茶。", answer: "He was busy writing the story all the morning, only breaking off occasionally to have a cup of tea." },
+            { question: "他们肯定没有打算把他培养成一名工程师，我猜想他们永远也不会这样做。", answer: "Undoubtedly they do not have the intention of making an engineer of him, and I suspect they never will." },
+            { question: "我怀疑这家工厂什么质量控制都没有。经过一周的观察，我发现情况果真如此。", answer: "I suspected there was no quality control whatsoever in the factory. After making observations for a week I found this was indeed the case." },
+            { question: "我很幸运，在我年轻的时候就学会了许多不同的技能。", answer: "I am lucky to have acquired a wide range of skills when I was young." },
+            { question: "这些画价值在五千万美元左右，绝不能直接暴露在阳光之下。", answer: "These drawings, which are worth something like 50 million dollars, must not be exposed to direct sunlight." },
+            { question: "由于流感在社区传播，她用暖和的冬衣将自己裹起来，以防传染上这种疾病。", answer: "As the flu was spreading in the community, she wrapped herself in warm winter clothing to avoid catching the disease." },
+            { question: "被告否认他曾经向政府官员付钱以获得合同。", answer: "The defendant denied that he had ever made any payment to the government official to get a contract." },
+            { question: "当他渐渐获得了信心的时候，他的语调变得自然了，说起话来也就自然脱口而出了。", answer: "As he gradually acquired confidence, his tone became natural and his words came out spontaneously." }
+        ];
+
+        // 5. 段落翻译题目数据（完整8段）
+        const paragraphQuestions = [
+            {
+                question: "Do not treat all new words in exactly the same way. Have you ever complained about your memory because you find it simply impossible to memorize all the new words you are learning? But, in fact, it is not your memory that is at fault. If you cram your head with too many new words at a time, some of them are bound to be crowded out. What you need to do is to deal with new words in different ways according to how frequently they occur in everyday use. While active words demand constant practice and useful words must be committed to memory, words that do not often occur in everyday situations require just a nodding acquaintance. You will find concentrating on active and useful words the most effective route to enlarge your vocabulary.",
+                answer: "不要以完全同样的方式对待所有的生词。你可曾因为简直无法记住所学的所有生词而抱怨自己的记忆力太差？其实，责任并不在你的记忆力。如果你一下子把太多的生词塞进头脑，必定有一些生词会被挤出来。你需要做的是根据生词日常使用的频率以不同的方式对待它们。积极词汇需要经常练习，有用的词汇必须牢记，而在日常情况下不常出现的词只需见到时认识即可。你会发现把注意力集中于积极有用的词上是扩大词汇量最有效的途径。"
+            },
+            {
+                question: "The years passed. He gave up flying and began sailing. He enjoyed it greatly. Chichester was already 58 years old when he won the first solo transatlantic race. His old dream of going around the world came true, but this time he would sail. His friends and doctors did not think he could do it, as he had lung cancer. But Chichester was determined to carry out his plan. In August, 1966, at the age of nearly sixty-five, an age when many men retire, he began the greatest voyage of his life. Soon, he was away in his new 16-meter boat, Gispsy Moth.",
+                answer: "好多年过去了。他放弃了飞行，开始航海。他领略到航海的巨大乐趣。奇切斯特在首届横渡大西洋单人航海比赛中夺魁时，已经五十八岁。他周游世界的夙愿重又被唤起，不过这一次他是要架船环游。由于他患有肺癌，朋友们和医生们都认为他不该去，但奇切斯特决意实施自己的计划。1966年8月，在他快年满六十五岁的时候—许多人在这个年龄已经退休—他开始了一生中最了不起的一次航海。不久，他就驾着那艘16米长的新吉普赛·莫斯号启程出海了。"
+            },
+            {
+                question: "He gave her four envelopes. Three were unsealed cards from old friends. The fourth was sealed, in Myra's writing. The old lady felt a pang of disappointment. Almost reluctantly she tore the envelop open. Folded in the card was a piece of paper. Written on the card was a massage under the printed Happy Birthday—Buy yourself something nice with the cheque, Myra and Harold. The cheque fluttered to the floor like a bird with a broken wing. Slowly the old lady stooped to pick it up. Her present, her lovely present. With trembling fingers she tore it into little bits.",
+                answer: "他交给她四封信。三封没封口，是老朋友寄来的生日卡。第四封是封口的，上面的字迹出自于迈拉之手。失望的痛楚攫住了老太太的心。她几乎是带几分勉强之意撕开了信封。只见生日卡里夹着一张叠起来的纸。卡上印有“生日快乐”字样，下面写着一句附言–拿这张支票给自己买样称心的东西吧--迈拉和哈罗德。支票像只断了翅膀的小鸟似地飘落到地板上。老太太慢慢地弯下腰，把支票从地上捡了起来。她的礼物，她的可爱的礼物！她用颤抖的手指把支票撕了个粉碎。"
+            },
+            {
+                question: "Let us take a serious, reasonable look at what the results might be if such a proposal were accepted. Families might use the time for a real family hour. Without the distraction of TV, they might sit around together after dinner and actually talk to one another. It is well known that many of our problems—everything, in fact, from the generation gap to the high divorce rate to some forms of mental illness — are caused at least in part by failure to communicate. By using the quiet family hour to discuss our problems, we might get to know each other better, and to like each other better.",
+                answer: "让我们认真而通情达理地看一下，如果这一建议被采纳的话，会有什么样的结果。千家万户也许会利用这段时间真正地团聚一番。没有电视机的干扰，他们晚饭后也许会围坐在一起，当真交谈起来。众所周知，我们的许多问题–事实上是所有的问题，从代沟、高离婚率到某些精神病–至少部分地是由于没能交流思想而引起的。利用这安静的、全家聚在一起的时刻来讨论我们的各种问题，我们相互之间也许会更加了解、更加相爱。"
+            },
+            {
+                question: "People ask what college I attended, what degree I have, and what qualifications I have to be a writer. The answer is none. I just write. I'm not a genius, I'm not gifted and don't write right. I'm not disciplined, either, and spend more time with my children and friends than I do writing. I didn't own a thesaurus until four years ago and I use a small Webster's dictionary that I bought for 89 cents. I use an electric typewriter that I paid $129 for six years ago. I have never used a word processor. I do all the cooking, cleaning and laundry for a family of six and fit my writing in a few minutes here and there. I write everything in longhand while sitting on the sofa with my four kids, eating pizza and watching TV. When the book is finished, I type it and mail it to the publisher.",
+                answer: "人们问我读过什么大学，有什么学位，有什么资历成为一个作家。我的回答是什么都没有。我只是写。我不是天才，我没有天赋，写作是野路子。我也没受过什么训练，而且在孩子和朋友们身上花的时间比写作还多。直到四年前我才有了一本同类词汇编，我一直用一本89美分买的韦氏小词典。我用的电动打字机是六年前花129美元买的。我从未用过文字处理机。我们一家六口，烧饭、洗衣、打扫卫生全是我一个人做，只能见缝插针地抽空写那么几分钟。我是跟四个孩子坐在沙发上边吃匹萨饼边看电视时以手写的方式写东西的。书写完后，再把它打出来寄给出版商。"
+            },
+            {
+                question: "I went to the plant and spent about a week looking around and making notes. I was really amazed at what I saw. Most curious of all, there was no quality control whatsoever. No one inspected the final products of the factory. As a result some of the shirts that were put in boxes for shipment were missing one or two buttons, the collar, even a sleeve sometimes! The working conditions were poor. The tables where the workers sat were very high and uncomfortable. Except for a half hour at lunchtime, there were no breaks in the day to relieve the boring work. I was amazed that the workers hadn't gone on strike.",
+                answer: "我来到厂里，花了一个星期左右的时间一边到处查看，一边做些笔记。说真的，我对看到的情况不胜惊讶。最为奇怪的是，厂里竟然没有任何质量控制。没有人检验工厂生产的产品。结果，有些装箱待运的衬衫不是缺了一两粒纽扣，就是少了衣领，有时甚至还会少只袖子。工厂的生产条件很差。工作台很高，工人坐在旁边很不舒服。除了吃中饭的半个小时外，全天没有别的休息时间来调剂一下令人厌倦的工作。使我感到惊奇的是，工人们竟然没有罢工。"
+            },
+            {
+                question: "The elderly gentleman, who was poorly but neatly dressed, accepted the spoon and began eagerly to sample one after another of the puddings, only breaking off occasionally to wipe his red eyes with a large torn handkerchief. All the time it was evident that he sincerely believed that he might eventually buy one of these puddings, and I am positive that he did not for a moment feel that he was in any way cheating the store. Poor old chap! Probably he had come down in the world and this sampling was all that was left him from the time when he could afford to come and select his favorite pudding.",
+                answer: "这位老先生衣着虽然破旧，但却十分整洁。他接过调羹，便开始急切地一只接一只地品尝起来，只是偶尔停下来，用一方大的破手绢擦擦他的红眼睛。有一点至始至终很明显：他真诚地相信自己最终也许会买一只布丁；而我也确信，他一点也不觉得自己是在欺骗商店。可怜的老头儿！很可能他已经家道败落。从前他是有钱来选购他最喜爱的布丁的，而今却只能这样来品尝一下布丁的味道了。"
+            },
+            {
+                question: "I was deeply moved by the discovery and yet sickened by the knowledge that, bursting into her room like this, I had robbed her of the pleasure of seeing me astonished and delighted on Christmas day. I hadn't wanted to know her lovely secret; still coming upon it like this made me feel as though I'd struck a blow against her happiness. I backed out, put the key back in its hiding place, and thought over what to do. I decided that between now and Christmas I must do nothing, absolutely nothing, to reveal the slightest hint of my terrible knowledge. I must avoid the least word that might reveal my possession of her secret. Nothing must deny her the happiness of seeing me completely amazed on Christmas day.",
+                answer: "这一发现让我深为感动，然而想到这样闯进她的卧室，从而剥夺了她在圣诞节那天见到我又惊又喜时的欢乐，我又感到厌恶。我本不想知道她这个可爱的秘密；但像这样偶然地发现了它竟然使我觉得好像重重地打击了她的欢乐一样。我从她的卧室退了出来，把钥匙放回原处，认真考虑着该怎么办才好。我决定，在现在和圣诞节之间这段时间里，我必须不动声色，绝对不可露出一点蛛丝马迹暗示我已令人讨厌地知道了此事。我必须谨言慎行，不能让她知道我已掌握了她的秘密。必须想尽一切办法让她在圣诞节那天享受到看见我极为惊讶时的快乐。"
+            }
+        ];
+
+        // ========== 全局状态管理 ==========
+        const state = {
+            currentTab: "choice",
+            currentIndex: 0,
+            score: 0,
+            answeredCount: 0,
+            selectedOption: "",
+            hasAnswered: false,
+            isRandomMode: false,
+            isTimerRunning: false,
+            timerInterval: null,
+            timerSeconds: 0,
+            errorBook: JSON.parse(localStorage.getItem("fdEnglish3ErrorBook")) || [],
+            isErrorPracticeMode: false,
+            currentErrorIndex: 0
+        };
+
+        // ========== DOM 元素获取 ==========
+        const elements = {
+            // 标签切换
+            tabBtns: document.querySelectorAll(".tab-btn"),
+            questionAreas: document.querySelectorAll(".question-area"),
+            // 进度与得分
+            currentQuestion: document.getElementById("current-question"),
+            totalCount: document.getElementById("total-count"),
+            totalScore: document.getElementById("total-score"),
+            totalQuestions: document.getElementById("total-questions"),
+            accuracy: document.getElementById("accuracy"),
+            // 计时器
+            timer: document.getElementById("timer"),
+            timerBtn: document.getElementById("timer-btn"),
+            // 控制按钮
+            randomBtn: document.getElementById("random-btn"),
+            errorBookBtn: document.getElementById("error-book-btn"),
+            errorCount: document.getElementById("error-count"),
+            resetBtn: document.getElementById("reset-btn"),
+            // 进度条
+            progressFill: document.getElementById("progress-fill"),
+            // 选词填空
+            choiceQuestion: document.getElementById("choice-question"),
+            choiceOptions: document.getElementById("choice-options"),
+            choiceAnswer: document.getElementById("choice-answer"),
+            // 单词拼写
+            wordQuestion: document.getElementById("word-question"),
+            wordInput: document.getElementById("word-input"),
+            wordAnswer: document.getElementById("word-answer"),
+            // 短语翻译
+            phraseQuestion: document.getElementById("phrase-question"),
+            phraseInput: document.getElementById("phrase-input"),
+            phraseAnswer: document.getElementById("phrase-answer"),
+            // 句子翻译
+            sentenceQuestion: document.getElementById("sentence-question"),
+            sentenceInput: document.getElementById("sentence-input"),
+            sentenceAnswer: document.getElementById("sentence-answer"),
+            // 段落翻译
+            paragraphQuestion: document.getElementById("paragraph-question"),
+            paragraphInput: document.getElementById("paragraph-input"),
+            paragraphAnswer: document.getElementById("paragraph-answer"),
+            // 功能按钮
+            submitBtn: document.getElementById("submit-btn"),
+            nextBtn: document.getElementById("next-btn"),
+            showAnswerBtn: document.getElementById("show-answer-btn"),
+            // 错题本模态框
+            errorBookModal: document.getElementById("error-book-modal"),
+            closeModal: document.getElementById("close-modal"),
+            errorList: document.getElementById("error-list"),
+            clearErrorBtn: document.getElementById("clear-error-btn"),
+            practiceErrorBtn: document.getElementById("practice-error-btn")
+        };
+
+        // ========== 初始化函数 ==========
+        function init() {
+            // 初始化标签切换事件
+            elements.tabBtns.forEach(btn => {
+                btn.addEventListener("click", switchTab);
+            });
+
+            // 初始化按钮事件
+            elements.submitBtn.addEventListener("click", submitAnswer);
+            elements.nextBtn.addEventListener("click", goToNextQuestion);
+            elements.showAnswerBtn.addEventListener("click", showAnswer);
+            elements.randomBtn.addEventListener("click", toggleRandomMode);
+            elements.timerBtn.addEventListener("click", toggleTimer);
+            elements.errorBookBtn.addEventListener("click", openErrorBook);
+            elements.closeModal.addEventListener("click", closeErrorBook);
+            elements.clearErrorBtn.addEventListener("click", clearErrorBook);
+            elements.practiceErrorBtn.addEventListener("click", practiceErrors);
+            elements.resetBtn.addEventListener("click", resetProgress);
+
+            // 初始化错题数显示
+            updateErrorCount();
+
+            // 初始化默认题型（选词填空）
+            switchTab({ target: { dataset: { tab: "choice" } } });
+        }
+
+        // ========== 题型切换函数 ==========
+        function switchTab(e) {
+            // 更新选中标签
+            const tab = e.target.dataset.tab;
+            state.currentTab = tab;
+            state.currentIndex = 0;
+            state.selectedOption = "";
+            state.isErrorPracticeMode = false;
+
+            // 切换标签样式
+            elements.tabBtns.forEach(btn => {
+                btn.classList.toggle("active", btn.dataset.tab === tab);
+            });
+
+            // 切换答题区域
+            elements.questionAreas.forEach(area => {
+                area.classList.toggle("active", area.id === `${tab}-area`);
+            });
+
+            // 重置输入框和答案提示
+            resetInputAndHint();
+
+            // 加载对应题型的题目
+            loadCurrentQuestion();
+
+            // 更新总数显示
+            updateTotalCount();
+            updateScoreDisplay();
+        }
+
+        // ========== 加载当前题目 ==========
+        function loadCurrentQuestion() {
+            const tab = state.currentTab;
+            const index = state.currentIndex;
+            const questions = getCurrentQuestions();
+
+            // 更新当前题目数
+            elements.currentQuestion.textContent = index + 1;
+            updateProgressBar();
+
+            switch (tab) {
+                case "choice":
+                    loadChoiceQuestion(questions[index]);
+                    break;
+                case "word":
+                    loadWordQuestion(questions[index]);
+                    break;
+                case "phrase":
+                    loadPhraseQuestion(questions[index]);
+                    break;
+                case "sentence":
+                    loadSentenceQuestion(questions[index]);
+                    break;
+                case "paragraph":
+                    loadParagraphQuestion(questions[index]);
+                    break;
+            }
+        }
+
+        // 获取当前题型的题目数组
+        function getCurrentQuestions() {
+            if (state.isErrorPracticeMode) {
+                return state.errorBook.filter(item => item.type === state.currentTab);
+            }
+
+            const questionMap = {
+                choice: choiceQuestions,
+                word: wordQuestions,
+                phrase: phraseQuestions,
+                sentence: sentenceQuestions,
+                paragraph: paragraphQuestions
+            };
+
+            let questions = questionMap[state.currentTab];
+            
+            // 如果是随机模式，打乱题目顺序
+            if (state.isRandomMode && !state.shuffledQuestions) {
+                state.shuffledQuestions = {};
+                for (const key in questionMap) {
+                    state.shuffledQuestions[key] = [...questionMap[key]].sort(() => Math.random() - 0.5);
+                }
+            }
+
+            return state.isRandomMode ? state.shuffledQuestions[state.currentTab] : questions;
+        }
+
+        // 加载选词填空题目
+        function loadChoiceQuestion(q) {
+            elements.choiceQuestion.textContent = q.question;
+            
+            // 清空选项
+            elements.choiceOptions.innerHTML = "";
+            
+            // 生成选项
+            for (const [key, value] of Object.entries(q.options)) {
+                const option = document.createElement("div");
+                option.className = "option-item";
+                option.dataset.key = key;
+                option.textContent = `${key}: ${value}`;
+                
+                // 选项点击事件
+                option.addEventListener("click", () => {
+                    // 取消其他选项选中状态
+                    document.querySelectorAll(".option-item").forEach(item => {
+                        item.classList.remove("selected");
+                    });
+                    // 选中当前选项
+                    option.classList.add("selected");
+                    state.selectedOption = key;
+                });
+                
+                elements.choiceOptions.appendChild(option);
+            }
+        }
+
+        // 加载单词拼写题目
+        function loadWordQuestion(q) {
+            elements.wordQuestion.textContent = q.question;
+            elements.wordInput.value = "";
+        }
+
+        // 加载短语翻译题目
+        function loadPhraseQuestion(q) {
+            elements.phraseQuestion.textContent = q.question;
+            elements.phraseInput.value = "";
+        }
+
+        // 加载句子翻译题目
+        function loadSentenceQuestion(q) {
+            elements.sentenceQuestion.textContent = q.question;
+            elements.sentenceInput.value = "";
+        }
+
+        // 加载段落翻译题目
+        function loadParagraphQuestion(q) {
+            elements.paragraphQuestion.textContent = q.question;
+            elements.paragraphInput.value = "";
+        }
+
+        // ========== 提交答案 ==========
+        function submitAnswer() {
+            if (state.hasAnswered) return;
+
+            const tab = state.currentTab;
+            const index = state.currentIndex;
+            const questions = getCurrentQuestions();
+            const q = questions[index];
+            
+            let isCorrect = false;
+            let userAnswer = "";
+            let correctAnswer = q.answer;
+
+            switch (tab) {
+                case "choice":
+                    userAnswer = state.selectedOption;
+                    isCorrect = userAnswer === correctAnswer;
+                    // 标记选项对错
+                    markChoiceOptions(isCorrect, correctAnswer);
+                    break;
+                case "word":
+                    userAnswer = elements.wordInput.value.trim().toLowerCase();
+                    isCorrect = userAnswer === correctAnswer.toLowerCase();
+                    break;
+                case "phrase":
+                    userAnswer = elements.phraseInput.value.trim();
+                    // 短语翻译模糊匹配（忽略标点和空格差异）
+                    const normalize = str => str.replace(/[^\w\u4e00-\u9fa5]/g, "").replace(/\s+/g, "");
+                    isCorrect = normalize(userAnswer) === normalize(correctAnswer);
+                    break;
+                case "sentence":
+                case "paragraph":
+                    userAnswer = tab === "sentence" ? elements.sentenceInput.value.trim() : elements.paragraphInput.value.trim();
+                    // 句子和段落翻译仅做参考，不自动判分
+                    isCorrect = confirm("翻译完成，是否标记为正确？");
+                    break;
+            }
+
+            // 更新得分
+            if (isCorrect) {
+                state.score++;
+            } else {
+                // 添加到错题本
+                addToErrorBook(tab, q, userAnswer, correctAnswer);
+            }
+            
+            state.answeredCount++;
+            state.hasAnswered = true;
+
+            // 显示答案提示
+            showAnswerHint(isCorrect, correctAnswer);
+
+            // 更新得分显示
+            updateScoreDisplay();
+        }
+
+        // 标记选词填空选项对错
+        function markChoiceOptions(isCorrect, correctAnswer) {
+            const options = document.querySelectorAll(".option-item");
+            options.forEach(option => {
+                const key = option.dataset.key;
+                if (key === correctAnswer) {
+                    option.classList.add("correct");
+                } else if (key === state.selectedOption && !isCorrect) {
+                    option.classList.add("wrong");
+                }
+                // 禁用选项点击
+                option.style.pointerEvents = "none";
+            });
+        }
+
+        // 显示答案提示
+        function showAnswerHint(isCorrect, correctAnswer) {
+            const tab = state.currentTab;
+            const hintElement = document.getElementById(`${tab}-answer`);
+            
+            hintElement.style.display = "block";
+            if (isCorrect) {
+                hintElement.className = "answer-hint answer-correct";
+                hintElement.textContent = `正确！答案：${correctAnswer}`;
+            } else {
+                hintElement.className = "answer-hint answer-wrong";
+                hintElement.textContent = `错误！正确答案：\n${correctAnswer}`;
+            }
+        }
+
+        // ========== 显示答案 ==========
+        function showAnswer() {
+            if (state.hasAnswered) return;
+
+            const tab = state.currentTab;
+            const index = state.currentIndex;
+            const questions = getCurrentQuestions();
+            const correctAnswer = questions[index].answer;
+
+            switch (tab) {
+                case "choice":
+                    // 标记正确选项
+                    document.querySelectorAll(".option-item").forEach(option => {
+                        option.style.pointerEvents = "none";
+                        if (option.dataset.key === correctAnswer) {
+                            option.classList.add("correct");
+                        }
+                    });
+                    break;
+            }
+
+            // 显示答案提示
+            showAnswerHint(false, correctAnswer);
+            state.hasAnswered = true;
+        }
+
+        // ========== 下一题 ==========
+        function goToNextQuestion() {
+            const tab = state.currentTab;
+            const total = getCurrentQuestions().length;
+            
+            // 重置状态
+            state.selectedOption = "";
+            state.hasAnswered = false;
+            resetInputAndHint();
+
+            // 切换到下一题（循环）
+            state.currentIndex = (state.currentIndex + 1) % total;
+            
+            // 加载新题目
+            loadCurrentQuestion();
+        }
+
+        // ========== 随机出题模式 ==========
+        function toggleRandomMode() {
+            state.isRandomMode = !state.isRandomMode;
+            state.shuffledQuestions = null;
+            state.currentIndex = 0;
+            
+            elements.randomBtn.classList.toggle("active", state.isRandomMode);
+            elements.randomBtn.textContent = state.isRandomMode ? "顺序出题" : "随机出题";
+            
+            // 重新加载题目
+            loadCurrentQuestion();
+            updateTotalCount();
+        }
+
+        // ========== 计时功能 ==========
+        function toggleTimer() {
+            if (state.isTimerRunning) {
+                // 停止计时
+                clearInterval(state.timerInterval);
+                state.isTimerRunning = false;
+                elements.timerBtn.textContent = "开始计时";
+                elements.timerBtn.classList.remove("danger");
+            } else {
+                // 开始计时
+                state.timerInterval = setInterval(updateTimer, 1000);
+                state.isTimerRunning = true;
+                elements.timerBtn.textContent = "停止计时";
+                elements.timerBtn.classList.add("danger");
+            }
+        }
+
+        function updateTimer() {
+            state.timerSeconds++;
+            const hours = Math.floor(state.timerSeconds / 3600).toString().padStart(2, "0");
+            const minutes = Math.floor((state.timerSeconds % 3600) / 60).toString().padStart(2, "0");
+            const seconds = (state.timerSeconds % 60).toString().padStart(2, "0");
+            elements.timer.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        // ========== 错题本功能 ==========
+        function addToErrorBook(type, question, userAnswer, correctAnswer) {
+            // 检查是否已存在该错题
+            const exists = state.errorBook.some(item => 
+                item.type === type && 
+                item.question === question.question && 
+                item.correctAnswer === correctAnswer
+            );
+
+            if (!exists) {
+                state.errorBook.push({
+                    type,
+                    question: question.question,
+                    options: question.options,
+                    userAnswer,
+                    correctAnswer,
+                    timestamp: new Date().toLocaleString()
+                });
+                // 保存到本地存储
+                localStorage.setItem("fdEnglish3ErrorBook", JSON.stringify(state.errorBook));
+                updateErrorCount();
+            }
+        }
+
+        function updateErrorCount() {
+            elements.errorCount.textContent = state.errorBook.length;
+        }
+
+        function openErrorBook() {
+            elements.errorBookModal.style.display = "block";
+            renderErrorList();
+        }
+
+        function closeErrorBook() {
+            elements.errorBookModal.style.display = "none";
+        }
+
+        function renderErrorList() {
+            if (state.errorBook.length === 0) {
+                elements.errorList.innerHTML = "<p>暂无错题记录</p>";
+                return;
+            }
+
+            const typeNames = {
+                choice: "选词填空",
+                word: "单词拼写",
+                phrase: "短语翻译",
+                sentence: "句子翻译",
+                paragraph: "段落翻译"
+            };
+
+            elements.errorList.innerHTML = state.errorBook.map((item, index) => `
+                <div class="error-item">
+                    <div class="error-question">
+                        <strong>[${typeNames[item.type]}]</strong> ${item.question}
+                    </div>
+                    <div class="error-answer">你的答案：${item.userAnswer || "未作答"}</div>
+                    <div class="error-correct">正确答案：${item.correctAnswer}</div>
+                    <div style="margin-top: 10px; text-align: right;">
+                        <button class="control-btn" onclick="removeError(${index})">移除</button>
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        // 全局函数，供错题本按钮调用
+        window.removeError = function(index) {
+            state.errorBook.splice(index, 1);
+            localStorage.setItem("fdEnglish3ErrorBook", JSON.stringify(state.errorBook));
+            updateErrorCount();
+            renderErrorList();
+        };
+
+        function clearErrorBook() {
+            if (confirm("确定要清空所有错题记录吗？")) {
+                state.errorBook = [];
+                localStorage.removeItem("fdEnglish3ErrorBook");
+                updateErrorCount();
+                renderErrorList();
+            }
+        }
+
+        function practiceErrors() {
+            if (state.errorBook.length === 0) {
+                alert("暂无错题可练习");
+                return;
+            }
+
+            closeErrorBook();
+            state.isErrorPracticeMode = true;
+            state.currentIndex = 0;
+            
+            // 自动切换到有错题的第一个题型
+            const errorTypes = [...new Set(state.errorBook.map(item => item.type))];
+            if (errorTypes.length > 0) {
+                const firstErrorTab = errorTypes[0];
+                state.currentTab = firstErrorTab;
+                
+                // 更新标签选中状态
+                elements.tabBtns.forEach(btn => {
+                    btn.classList.toggle("active", btn.dataset.tab === firstErrorTab);
+                });
+                
+                // 切换答题区域
+                elements.questionAreas.forEach(area => {
+                    area.classList.toggle("active", area.id === `${firstErrorTab}-area`);
+                });
+            }
+
+            // 重置输入框和答案提示
+            resetInputAndHint();
+
+            // 加载错题
+            loadCurrentQuestion();
+            updateTotalCount();
+            updateScoreDisplay();
+        }
+
+        // ========== 重置进度 ==========
+        function resetProgress() {
+            if (confirm("确定要重置所有答题进度吗？得分和已答题数将清零，错题本不会被清空。")) {
+                state.score = 0;
+                state.answeredCount = 0;
+                state.currentIndex = 0;
+                state.hasAnswered = false;
+                state.selectedOption = "";
+                state.shuffledQuestions = null;
+                
+                // 停止计时
+                if (state.isTimerRunning) {
+                    toggleTimer();
+                }
+                state.timerSeconds = 0;
+                elements.timer.textContent = "00:00:00";
+                
+                // 重置输入框和答案提示
+                resetInputAndHint();
+                
+                // 重新加载题目
+                loadCurrentQuestion();
+                updateTotalCount();
+                updateScoreDisplay();
+            }
+        }
+
+        // ========== 辅助函数 ==========
+        // 重置输入框和答案提示
+        function resetInputAndHint() {
+            // 清空输入框
+            elements.wordInput.value = "";
+            elements.phraseInput.value = "";
+            elements.sentenceInput.value = "";
+            elements.paragraphInput.value = "";
+            
+            // 隐藏答案提示
+            elements.choiceAnswer.style.display = "none";
+            elements.wordAnswer.style.display = "none";
+            elements.phraseAnswer.style.display = "none";
+            elements.sentenceAnswer.style.display = "none";
+            elements.paragraphAnswer.style.display = "none";
+            
+            // 重置选项样式
+            if (elements.choiceOptions.children.length > 0) {
+                document.querySelectorAll(".option-item").forEach(option => {
+                    option.classList.remove("selected", "correct", "wrong");
+                    option.style.pointerEvents = "auto";
+                });
+            }
+        }
+
+        // 获取当前题型的总题数
+        function getTotalQuestions() {
+            return getCurrentQuestions().length;
+        }
+
+        // 更新总题数显示
+        function updateTotalCount() {
+            const total = getTotalQuestions();
+            elements.totalCount.textContent = total;
+        }
+
+        // 更新得分显示
+        function updateScoreDisplay() {
+            elements.totalScore.textContent = state.score;
+            elements.totalQuestions.textContent = state.answeredCount;
+            
+            // 计算正确率
+            const accuracy = state.answeredCount > 0 
+                ? Math.round((state.score / state.answeredCount) * 100) 
+                : 0;
+            elements.accuracy.textContent = `${accuracy}%`;
+        }
+
+        // 更新进度条
+        function updateProgressBar() {
+            const total = getTotalQuestions();
+            const progress = ((state.currentIndex + 1) / total) * 100;
+            elements.progressFill.style.width = `${progress}%`;
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            if (event.target === elements.errorBookModal) {
+                closeErrorBook();
+            }
+        };
+
+        // 初始化程序
+        window.onload = init;
+    </script>
+</body>
+</html>
